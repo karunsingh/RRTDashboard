@@ -5,6 +5,7 @@ from Tkinter import *
 import ttk
 from time import sleep
 from threading import Thread
+import socket
 
 class AppDriver(Tk):
 
@@ -34,13 +35,23 @@ class AppDriver(Tk):
         frame.tkraise()
         # Begin simulation
         if (page_name == "Dash"):
-            thread = Thread(target=self.speed_test)
+            thread = Thread(target=self.network_thread)
             thread.start()
 
     def speed_test(self):
         for i in range(100):
             sleep(0.07)
             self.speed.set(str(i)+" kmph")
+
+    def network_thread(self):
+        s = socket.socket()
+        host = '169.254.0.1'
+        port = 12345
+        s.connect((host, port))
+        while 1:
+            data = s.recv(512)
+            print "RECEIVED: ", data
+            self.speed.set(data+" kmph")
 
 
 class Dash(Frame):
@@ -55,12 +66,18 @@ class Dash(Frame):
         """pb_hd = ttk.Progressbar(self, orient='horizontal', mode='determinate')
         pb_hd.pack(side=TOP)
         pb_hd.step(50)"""
-        w = Label(self, textvariable=self.speed, font=("System", 30), fg="#fff", bg="#000", height=4)
-        w.pack();
+        w = Label(self, textvariable=self.speed, font=("System", 30), fg="#fff", bg="#000")
+        w.grid(row=1, rowspan=1, column=0, columnspan=4, sticky="n")
         b = Button(self, text="Back", command=lambda: self.controller.show_frame("Welcome"), bd=0,
-            bg="#f00", fg="#fff", height=40)
-        b.pack(side=TOP, fill=X)
-        self.pack()
+            bg="#f00", fg="#fff", padx=10, pady=5)
+        b.grid(row=0, rowspan=1, column=3, columnspan=1, sticky="ne")
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(2, weight=1)
+        self.grid_columnconfigure(3, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=2)
+        self.grid()
         
 
 class Welcome(Frame):
@@ -86,6 +103,8 @@ class Welcome(Frame):
 
 def main():
     app = AppDriver()
+    # Title bar:
+    app.overrideredirect(1)
     app.mainloop()
 
 if __name__ == '__main__':
