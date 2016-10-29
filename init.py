@@ -6,25 +6,30 @@ import ttk
 from time import sleep
 from threading import Thread
 import socket
+import json
 
 class AppDriver(Tk):
 
     def __init__(self, *args, **kwargs):
         Tk.__init__(self, *args, **kwargs)
         self.geometry("320x240+0+0")
-        container = Frame(self, background="#ff0000")
-        container.pack(fill=BOTH)
-        container.grid_rowconfigure(0, weight=1)
-        container.grid_columnconfigure(0, weight=1)
+        self.container = Frame(self, background="#ff0000")
+        self.container.pack(fill=BOTH)
+        self.container.grid_rowconfigure(0, weight=1)
+        self.container.grid_columnconfigure(0, weight=1)
 
-        self.speed = StringVar()
-        container.speed = self.speed
-        self.speed.set("0 kmph")
+        self.container.speed = StringVar()
+        self.container.speed.set("0 kmph")
+
+        self.container.chargelevel = 100
+
+        self.container.charge = StringVar()
+        self.container.charge.set(str(self.container.chargelevel)+"%")
 
         self.frames = {}
         for F in (Welcome, Dash):
             page_name = F.__name__
-            frame = F(parent=container, controller=self)
+            frame = F(parent=self.container, controller=self)
             frame.grid(row=0, column=0, sticky="news")
             self.frames[page_name] = frame
 
@@ -38,20 +43,31 @@ class AppDriver(Tk):
             thread = Thread(target=self.network_thread)
             thread.start()
 
-    def speed_test(self):
-        for i in range(100):
-            sleep(0.07)
-            self.speed.set(str(i)+" kmph")
-
     def network_thread(self):
         s = socket.socket()
-        host = '169.254.0.1'
+        # Uncomment exactly one of these!
+        #host = socket.gethostname() - computer-computer
+        #host = '169.254.0.1' - computer-pi
+        #host = '169.254.233.59' - pi-pi
         port = 12345
         s.connect((host, port))
         while 1:
             data = s.recv(512)
             print "RECEIVED: ", data
-            self.speed.set(data+" kmph")
+            j = json.loads(data)
+            if j['type'] == 'charge':
+                self.update_charge(j['payload'])
+            elif j['type'] == 'speed':
+                self.update_speed(j['payload'])
+
+    def update_charge(self, data):
+        self.container.chargelevel = int(data)
+        self.container.charge.set(str(self.container.chargelevel)+"%")
+        self.frames['Dash'].update_ui()
+
+    def update_speed(self, data):
+        self.container.speed.set(data+" kmph")
+        self.frames['Dash'].update_ui() # doesn't do anything right now
 
 
 class Dash(Frame):
@@ -59,25 +75,34 @@ class Dash(Frame):
         Frame.__init__(self, parent, background="#000")            
         self.parent = parent
         self.controller = controller
-        self.speed = self.parent.speed
         self.initUI()
 
     def initUI(self):
-        """pb_hd = ttk.Progressbar(self, orient='horizontal', mode='determinate')
-        pb_hd.pack(side=TOP)
-        pb_hd.step(50)"""
-        w = Label(self, textvariable=self.speed, font=("System", 30), fg="#fff", bg="#000")
-        w.grid(row=1, rowspan=1, column=0, columnspan=4, sticky="n")
-        b = Button(self, text="Back", command=lambda: self.controller.show_frame("Welcome"), bd=0,
-            bg="#f00", fg="#fff", padx=10, pady=5)
-        b.grid(row=0, rowspan=1, column=3, columnspan=1, sticky="ne")
+        #b = Button(self, text="Back", command=lambda: self.controller.show_frame("Welcome"), bd=0,
+            #bg="#f00", fg="#fff", padx=10, pady=5)
+        #b.grid(row=0, rowspan=1, column=3, columnspan=1, sticky="ne")
+        self.btry = Label(self, textvariable=self.parent.charge, font=("System", 20), fg="#000", bg="#fff")
+        self.btry.grid(row=0, rowspan=1, column=0, columnspan=4, sticky="news")
+        spd = Label(self, textvariable=self.parent.speed, font=("System", 30), fg="#fff", bg="#000")
+        spd.grid(row=1, rowspan=1, column=0, columnspan=4, sticky="ns")
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure(2, weight=1)
         self.grid_columnconfigure(3, weight=1)
         self.grid_rowconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=2)
+        self.grid_rowconfigure(1, weight=4)
+        self.grid_rowconfigure(2, weight=1)
         self.grid()
+
+    def update_ui(self):
+        if self.parent.chargelevel >= 75:
+            self.btry.config(bg="#34ed3d")
+        elif self.parent.chargelevel >= 50:
+            self.btry.config(bg="#eded34")
+        elif self.parent.chargelevel >= 25:
+            self.btry.config(bg="#fc8711")
+        else:
+            self.btry.config(bg="#f00")
         
 
 class Welcome(Frame):
@@ -104,7 +129,7 @@ class Welcome(Frame):
 def main():
     app = AppDriver()
     # Title bar:
-    app.overrideredirect(1)
+    # app.overrideredirect(1)
     app.mainloop()
 
 if __name__ == '__main__':
