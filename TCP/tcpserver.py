@@ -1,6 +1,7 @@
 #!/usr/bin/python           # This is server.py file
 
 import socket               # Import socket module
+import json
 
 s = socket.socket()         # Create a socket object
 host = socket.gethostname() # Get local machine name
@@ -12,6 +13,7 @@ while True:
    c, addr = s.accept()     # Establish connection with client.
    print 'Got connection from', addr
    while True:
-      speed = raw_input("New speed: ")
-      c.send(speed)
+      speed = raw_input("New battery: ")
+      data = json.dumps({'type':'speed', 'payload':speed})
+      c.send(data)
    c.close()                # Close the connection
