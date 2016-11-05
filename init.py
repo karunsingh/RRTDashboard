@@ -5,6 +5,7 @@ from Tkinter import *
 import ttk
 from time import sleep
 from threading import Thread
+import threading
 import socket
 import json
 
@@ -21,10 +22,10 @@ class AppDriver(Tk):
         self.container.speed = StringVar()
         self.container.speed.set("0 kmph")
 
-        self.container.chargelevel = 100
-
         self.container.charge = StringVar()
-        self.container.charge.set(str(self.container.chargelevel)+"%")
+
+        self.container.is_heat = False
+        self.container.is_fault = False
 
         self.frames = {}
         for F in (Welcome, Dash):
@@ -35,20 +36,27 @@ class AppDriver(Tk):
 
         self.show_frame("Welcome")
 
+        self.update_charge(100)
+        self.update_speed(0)
+
     def show_frame(self, page_name):
         frame = self.frames[page_name]
         frame.tkraise()
-        # Begin simulation
         if (page_name == "Dash"):
-            thread = Thread(target=self.network_thread)
-            thread.start()
+            net_thread = Thread(target=self.network_thread)
+            net_thread.start()
+            warn_thread = Thread(target=frame.warning_thread)
+            warn_thread.start()
 
     def network_thread(self):
         s = socket.socket()
         # Uncomment exactly one of these!
-        #host = socket.gethostname() - computer-computer
-        #host = '169.254.0.1' - computer-pi
-        #host = '169.254.233.59' - pi-pi
+        # computer-computer
+        host = socket.gethostname()
+        # computer-pi
+        # host = '169.254.0.1'
+        # pi-pi
+        # host = '169.254.233.59'
         port = 12345
         s.connect((host, port))
         while 1:
@@ -59,6 +67,10 @@ class AppDriver(Tk):
                 self.update_charge(j['payload'])
             elif j['type'] == 'speed':
                 self.update_speed(j['payload'])
+            elif j['type'] == 'heat':
+                self.update_heat(j['payload'])
+            elif j['type'] == 'fault':
+                self.update_fault(j['payload'])
 
     def update_charge(self, data):
         self.container.chargelevel = int(data)
@@ -66,8 +78,21 @@ class AppDriver(Tk):
         self.frames['Dash'].update_ui()
 
     def update_speed(self, data):
-        self.container.speed.set(data+" kmph")
+        self.container.speedlevel = int(data)
+        self.container.speed.set(str(self.container.speedlevel)+" kmph")
         self.frames['Dash'].update_ui() # doesn't do anything right now
+
+    def update_heat(self, data):
+        if (data == True or data == 'true' or data == 'True'):
+            self.container.is_heat = True
+        else:
+            self.container.is_heat = False
+
+    def update_fault(self, data):
+        if (data == True or data == 'true' or data == 'True'):
+            self.container.is_fault = True
+        else:
+            self.container.is_fault = False
 
 
 class Dash(Frame):
@@ -76,15 +101,18 @@ class Dash(Frame):
         self.parent = parent
         self.controller = controller
         self.initUI()
+        self.heat_state = 0
+        self.fault_state = 0
 
     def initUI(self):
-        #b = Button(self, text="Back", command=lambda: self.controller.show_frame("Welcome"), bd=0,
-            #bg="#f00", fg="#fff", padx=10, pady=5)
-        #b.grid(row=0, rowspan=1, column=3, columnspan=1, sticky="ne")
         self.btry = Label(self, textvariable=self.parent.charge, font=("System", 20), fg="#000", bg="#fff")
         self.btry.grid(row=0, rowspan=1, column=0, columnspan=4, sticky="news")
-        spd = Label(self, textvariable=self.parent.speed, font=("System", 30), fg="#fff", bg="#000")
-        spd.grid(row=1, rowspan=1, column=0, columnspan=4, sticky="ns")
+        self.spd = Label(self, textvariable=self.parent.speed, font=("System", 30), fg="#fff", bg="#000")
+        self.spd.grid(row=1, rowspan=1, column=0, columnspan=4, sticky="ns")
+        self.heat = Label(self, text="Overheat", font=("System", 16), fg="#777", bg="#eee", relief=GROOVE, bd=2)
+        self.heat.grid(row=2, rowspan=1, column=0, columnspan=2, sticky="news")
+        self.fault = Label(self, text="Critical fault", font=("System", 16), fg="#777", bg="#eee", relief=GROOVE, bd=2)
+        self.fault.grid(row=2, rowspan=1, column=2, columnspan=2, sticky="news")
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure(2, weight=1)
@@ -96,14 +124,31 @@ class Dash(Frame):
 
     def update_ui(self):
         if self.parent.chargelevel >= 75:
-            self.btry.config(bg="#34ed3d")
+            self.btry.config(bg="#26d300")
         elif self.parent.chargelevel >= 50:
             self.btry.config(bg="#eded34")
         elif self.parent.chargelevel >= 25:
             self.btry.config(bg="#fc8711")
         else:
             self.btry.config(bg="#f00")
-        
+
+    def warning_thread(self):
+        threading.Timer(0.5, self.warning_thread).start()
+
+        if (self.heat_state == 0 and self.parent.is_heat == True):
+            self.heat.config(bg="#f00", fg="#fff")
+            self.heat_state = 1
+        else:
+            self.heat.config(bg="#eee", fg="#777")
+            self.heat_state = 0
+
+        if (self.fault_state == 0 and self.parent.is_fault == True):
+            self.fault.config(bg="#f00", fg="#fff")
+            self.fault_state = 1
+        else:
+            self.fault.config(bg="#eee", fg="#777")
+            self.fault_state = 0
+
 
 class Welcome(Frame):
   
