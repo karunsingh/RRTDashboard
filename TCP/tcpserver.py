@@ -14,6 +14,6 @@ while True:
    print 'Got connection from', addr
    while True:
       speed = raw_input("New battery: ")
-      data = json.dumps({'type':'speed', 'payload':speed})
+      data = json.dumps({'type':'heat', 'payload':speed})
       c.send(data)
    c.close()                # Close the connection
