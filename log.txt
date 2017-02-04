@@ -1,0 +1,19 @@
+Updated UI after charge
+Updated UI after speed
+RECEIVED: {"type": "charge", "payload": "56"}
+Updated UI after charge
+RECEIVED: {"type": "charge", "payload": "13"}
+Updated UI after charge
+RECEIVED: {"type": "charge", "payload": "24"}
+Updated UI after charge
+RECEIVED: {"type": "charge", "payload": "0"}
+Updated UI after charge
+RECEIVED: {"type": "charge", "payload": "99"}
+Updated UI after charge
+RECEIVED: {"type": "charge", "payload": "88 "}
+Updated UI after charge
+RECEIVED: {"type": "charge", "payload": "54    "}
+Updated UI after charge
+RECEIVED: {"type": "charge", "payload": "2"}
+Updated UI after charge
+RECEIVED: {"type": "charge", "payload": "a"}
