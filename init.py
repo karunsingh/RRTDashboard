@@ -114,10 +114,7 @@ class AppDriver(Tk):
         print "Updated UI after RPM"
 
     def blink_red(self):
-        if (self.container.is_red):
-            self.container.is_red = False
-        else:
-            self.container.is_red = True
+        self.container.is_red = not self.container.is_red
         self.frames['Dash'].update_ui()
         self.after(750, self.blink_red)
 
@@ -131,6 +128,7 @@ class Dash(Frame):
         self.fault_state = 0
 
     def initUI(self):
+        # Battery, speed, heat, fault labels
         self.btry = Label(self, textvariable=self.parent.charge, font=("System", 20), fg="#000", bg="#fff")
         self.btry.grid(row=0, rowspan=1, column=0, columnspan=4, sticky="news")
         self.spd = Label(self, textvariable=self.parent.speed, font=("System", 24), fg="#fff", bg="#000")
@@ -175,6 +173,7 @@ class Dash(Frame):
         self.grid()
 
     def update_ui(self):
+        # Battery background
         if self.parent.chargelevel >= 75:
             self.btry.config(bg="#26d300")
         elif self.parent.chargelevel >= 50:
@@ -184,16 +183,7 @@ class Dash(Frame):
         else:
             self.btry.config(bg="#ad1313")
 
-        if self.parent.is_heat == True:
-            self.heat.config(bg="#f00", fg="#fff")
-        else:
-            self.heat.config(bg="#eee", fg="#777")
-
-        if self.parent.is_fault == True:
-            self.fault.config(bg="#f00", fg="#fff")
-        else:
-            self.fault.config(bg="#eee", fg="#777")
-
+        # RPM indicator
         if self.parent.rpmpercent > 0:
             self.rpm8.config(bg="#5fc43a")
         else:
@@ -229,6 +219,7 @@ class Dash(Frame):
         else:
             self.rpm1.config(bg="#9ed8ed")
 
+        # Faults/overheat red flashing
         if (self.parent.is_red and self.parent.is_fault):
             self.fault.config(bg="#f00", fg="#fff")
             self.spd.config(bg="#f00")
