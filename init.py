@@ -29,6 +29,8 @@ class AppDriver(Tk):
 
         self.container.rpmpercent = 0.0
 
+        self.container.is_red = False
+
         self.frames = {}
         for F in (Welcome, Dash):
             page_name = F.__name__
@@ -41,6 +43,7 @@ class AppDriver(Tk):
         self.update_charge(100)
         self.update_speed(0)
         self.update_rpm(0)
+        self.blink_red()
 
     def show_frame(self, page_name):
         frame = self.frames[page_name]
@@ -57,9 +60,9 @@ class AppDriver(Tk):
         # computer-computer
         # host = socket.gethostname()
         # computer-pi (check host printed by tcpserver!)
-        host = '169.254.0.1'
+        # host = '169.254.0.1'
         # pi-pi
-        # host = '169.254.233.59'
+        host = '169.254.233.59'
         port = 12345
         s.connect((host, port))
         while 1:
@@ -112,7 +115,13 @@ class AppDriver(Tk):
         self.frames['Dash'].update_ui()
         print "Updated UI after RPM"
 
-
+    def blink_red(self):
+        self.frames['Dash'].update_ui()
+        if (self.container.is_red):
+            self.container.is_red = False
+        else:
+            self.container.is_red = True
+        self.after(1000, self.blink_red)
 
 class Dash(Frame):
     def __init__(self, parent, controller):
@@ -221,6 +230,24 @@ class Dash(Frame):
             self.rpm1.config(bg="#4272b2")
         else:
             self.rpm1.config(bg="#9ed8ed")
+
+        if (self.parent.is_red and self.parent.is_fault):
+            self.fault.config(bg="#f00", fg="#fff")
+            self.spd.config(bg="#f00")
+            self.config(bg="#f00")
+        else:
+            self.fault.config(bg="#eee", fg="#777")
+
+        if (self.parent.is_red and self.parent.is_heat):
+            self.heat.config(bg="#f00", fg="#fff")
+            self.spd.config(bg="#f00")
+            self.config(bg="#f00")
+        else:
+            self.heat.config(bg="#eee", fg="#777")
+
+        if (self.parent.is_red == False or (self.parent.is_fault == False and self.parent.is_heat == False)):
+            self.spd.config(bg="#000")
+            self.config(bg="#000")
 
     """def warning_thread(self):
         threading.Timer(0.5, self.warning_thread).start()
