@@ -182,7 +182,7 @@ class Dash(Frame):
         elif self.parent.chargelevel >= 25:
             self.btry.config(bg="#fc8711")
         else:
-            self.btry.config(bg="#f00")
+            self.btry.config(bg="#ad1313")
 
         if self.parent.is_heat == True:
             self.heat.config(bg="#f00", fg="#fff")
