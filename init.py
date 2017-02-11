@@ -51,8 +51,6 @@ class AppDriver(Tk):
         if (page_name == "Dash"):
             net_thread = Thread(target=self.network_thread)
             net_thread.start()
-            # warn_thread = Thread(target=frame.warning_thread)
-            # warn_thread.start()
 
     def network_thread(self):
         s = socket.socket()
@@ -60,9 +58,9 @@ class AppDriver(Tk):
         # computer-computer
         # host = socket.gethostname()
         # computer-pi (check host printed by tcpserver!)
-        # host = '169.254.0.1'
+        host = '169.254.0.1'
         # pi-pi
-        host = '169.254.233.59'
+        # host = '169.254.233.59'
         port = 12345
         s.connect((host, port))
         while 1:
@@ -116,12 +114,12 @@ class AppDriver(Tk):
         print "Updated UI after RPM"
 
     def blink_red(self):
-        self.frames['Dash'].update_ui()
         if (self.container.is_red):
             self.container.is_red = False
         else:
             self.container.is_red = True
-        self.after(1000, self.blink_red)
+        self.frames['Dash'].update_ui()
+        self.after(750, self.blink_red)
 
 class Dash(Frame):
     def __init__(self, parent, controller):
@@ -248,24 +246,6 @@ class Dash(Frame):
         if (self.parent.is_red == False or (self.parent.is_fault == False and self.parent.is_heat == False)):
             self.spd.config(bg="#000")
             self.config(bg="#000")
-
-    """def warning_thread(self):
-        threading.Timer(0.5, self.warning_thread).start()
-
-        if (self.heat_state == 0 and self.parent.is_heat == True):
-            self.heat.config(bg="#f00", fg="#fff")
-            self.heat_state = 1
-        else:
-            self.heat.config(bg="#eee", fg="#777")
-            self.heat_state = 0
-
-        if (self.fault_state == 0 and self.parent.is_fault == True):
-            self.fault.config(bg="#f00", fg="#fff")
-            self.fault_state = 1
-        else:
-            self.fault.config(bg="#eee", fg="#777")
-            self.fault_state = 0"""
-
 
 class Welcome(Frame):
   
