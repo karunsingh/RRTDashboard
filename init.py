@@ -58,9 +58,9 @@ class AppDriver(Tk):
         # computer-computer
         # host = socket.gethostname()
         # computer-pi (check host printed by tcpserver!)
-        host = '169.254.0.1'
+        # host = '169.254.0.1'
         # pi-pi
-        # host = '169.254.233.59'
+        host = '169.254.233.59'
         port = 12345
         s.connect((host, port))
         while 1:
@@ -262,7 +262,7 @@ class Welcome(Frame):
 def main():
     app = AppDriver()
     # Remove title bar:
-    app.overrideredirect(1)
+    # app.overrideredirect(1)
     app.mainloop()
 
 if __name__ == '__main__':
